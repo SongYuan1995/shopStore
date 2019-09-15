@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace的值为mapper接口的全路径  包名.接口名 -->
+<mapper namespace="com.byzx.authority.dao.UserMapper">
+			<resultMap id="BaseResultMap" type="com.byzx.authority.vo.MemberInfo" >
+	    <id column="user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+	    <result column="user_pwd" property="userPwd" jdbcType="VARCHAR" />
+	    <result column="user_state" property="userState" jdbcType="CHAR" />
+	    <result column="is_delete" property="isDelete" jdbcType="CHAR" />
+	    <result column="create_time" property="createTime" jdbcType="CHAR" />
+	  	 <result column="phone" property="phone" jdbcType="CHAR" />
+	  	 <result column="pic_url" property="picUrl" jdbcType="CHAR" />
+	  	 <result column="level" property="level" jdbcType="CHAR" />
+	  	 <result column="integral" property="integral" jdbcType="CHAR" />
+	  	 <result column="user_type" property="userType" jdbcType="CHAR" />
+	  
+	  </resultMap>
+	  
+<!--   用户管理，分页和模糊查询动态SQL片段 -->
+
+
+  <select id="findUserInfoU" parameterType="HashMap" resultMap="BaseResultMap"><!-- 查询用户 -->
+  	
+		SELECT * FROM member_info 
+		<where>
+            and 1=1		
+			<if test="user.nickName!=null ">
+				and nick_name like concat("%",#{user.nickName},"%")			
+			</if>	
+			<if test="user.userState!=null">
+				AND user_state=#{user.userState}
+			</if>				
+			 <if test="page!=null">
+				 limit #{page.limitIndex},#{page.pageSize}	
+		</if>	
+        </where>  
+ </select>
+	  
+	<update id="updateUserState1" parameterType="MemberInfo" >
+		update member_info set user_state=#{userState} where user_id=#{userId}	
+	</update>
+
+
+
+<update id="updateUserPwds" parameterType="Integer">
+		update member_info set user_pwd=MD5(123456) where user_id=#{userId}	
+	</update>
+
+
+
+
+</mapper>

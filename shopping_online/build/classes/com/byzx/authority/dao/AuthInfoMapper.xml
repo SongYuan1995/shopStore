@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace的值为mapper接口的全路径  包名.接口名 -->
+<mapper namespace="com.byzx.authority.dao.AuthInfoMapper">
+	<!-- 查询权限 -->
+	<resultMap id="authInfoResultMap" type="AuthInfo" >
+	    <id column="auth_id" property="authId" jdbcType="INTEGER" />
+	    <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+	    <result column="auth_name" property="authName" jdbcType="VARCHAR" />
+	    <result column="auth_desc" property="authDesc" jdbcType="VARCHAR" />
+	    <result column="auth_grade" property="authGrade" jdbcType="INTEGER" />
+	    <result column="auth_type" property="authType" jdbcType="CHAR" />
+	    <result column="auth_url" property="authUrl" jdbcType="VARCHAR" />
+	    <result column="auth_code" property="authCode" jdbcType="VARCHAR" />
+	    <result column="auth_order" property="authOrder" jdbcType="INTEGER" />
+	    <result column="auth_state" property="authState" jdbcType="CHAR" />
+	    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+	    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+	  </resultMap>
+	<select id="findAuthority" parameterType="HashMap" resultMap="authInfoResultMap">
+		SELECT * FROM auth_info WHERE auth_id IN
+				(SELECT ua.`auth_id` FROM user_info ui,user_auth ua 
+				WHERE ui.`user_id`=ua.`user_id` AND ui.`user_state`=1 AND ui.`is_delete`=0
+				AND ui.`user_id`=#{userId})
+				AND auth_state=1 AND parent_id=#{authId}
+			UNION
+			SELECT * FROM auth_info WHERE auth_id IN
+				(SELECT auth_id FROM role_auth WHERE role_id IN
+				(SELECT ur.role_id FROM user_role ur,role r,user_info ui 
+				WHERE ur.role_id=r.role_id AND ui.user_id=ur.user_id
+				AND r.role_state=1 AND ui.user_id=#{userId}))
+				AND auth_state=1 AND parent_id=#{authId}
+			UNION
+			SELECT * FROM auth_info WHERE auth_id IN
+				(SELECT auth_id FROM role_auth WHERE role_id IN
+				(SELECT gr.role_id FROM group_role gr,role r 
+				WHERE gr.role_id=r.role_id AND r.`role_state`=1 AND 
+				 gr.group_id IN
+				(SELECT ui.group_id FROM user_info ui,user_group ug
+				WHERE ui.`group_id`=ug.group_id AND ug.group_state=1
+				AND ui.group_id=#{groupId})))
+				AND auth_state=1 AND parent_id=#{authId}
+	</select>
+	<!-- 查询user信息三表联查 -->
+	 <resultMap id="userInfoResultMapper" type="UserInfo" >
+	    <id column="user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="group_id" property="groupId" jdbcType="INTEGER" />
+	    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+	    <result column="user_code" property="userCode" jdbcType="VARCHAR" />
+	    <result column="user_pwd" property="userPwd" jdbcType="VARCHAR" />
+	    <result column="user_type" property="userType" jdbcType="CHAR" />
+	    <result column="user_state" property="userState" jdbcType="CHAR" />
+	    <result column="is_delete" property="isDelete" jdbcType="CHAR" />
+	    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+	    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+	    <result column="store_id" property="storeId" jdbcType="INTEGER" />
+		    <association property="userGroup" javaType="UserGroup">
+		    	 <id column="group_id" property="groupId" jdbcType="INTEGER" />
+			    <result column="group_name" property="groupName" jdbcType="VARCHAR" />
+			    <result column="group_code" property="groupCode" jdbcType="VARCHAR" />
+			    <result column="group_desc" property="groupDesc" jdbcType="VARCHAR" />
+			    <result column="group_state" property="groupState" jdbcType="CHAR" />
+		    </association>
+		     <association property="role" javaType="Role">
+					<id column="role_id" property="roleId" jdbcType="INTEGER" />
+				    <result column="role_name" property="roleName" jdbcType="VARCHAR" />
+				    <result column="role_desc" property="roleDesc" jdbcType="VARCHAR" />
+				    <result column="role_code" property="roleCode" jdbcType="VARCHAR" />
+				    <result column="role_state" property="roleState" jdbcType="CHAR" />
+				    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+				    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+				    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+				    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+		    </association>
+	  </resultMap>
+	  
+	<select id="findAllUserInfo" parameterType="HashMap" resultMap="userInfoResultMapper">
+		SELECT ui.*,ug.*,r.* FROM user_info ui,user_group ug,role r   
+		<where>
+		 	ui.group_id=ug.group_id AND ui.user_type = r.role_id and ui.is_delete=0
+			<if test="null!=userInfo">
+			  <!-- 模糊查询时的userCode -->
+			   <if test="userInfo.userCode!=null and userInfo.userCode!=''">
+			  	 and ui.user_code like concat("%",#{userInfo.userCode},"%")
+			  </if>
+			  <!-- 模糊查询时的userType -->
+			  <if test="userInfo.userType!=null and userInfo.userType!=''">
+			  	 and ui.user_type = #{userInfo.userType}
+			  </if>
+			  <!-- 模糊查询时的userState -->
+			  <if test="userInfo.userState!=null and userInfo.userState!=''">
+			  	 and ui.user_state = #{userInfo.userState}
+			  </if>
+			  <if test="null!=page">
+			  	limit #{page.limitIndex},#{page.pageSize}
+			  </if>
+			</if>
+			
+		</where>
+	</select>
+	
+	<!-- 查询role表 -->
+	 <resultMap id="roleMap" type="Role" >
+	    <id column="role_id" property="roleId" jdbcType="INTEGER" />
+	    <result column="role_name" property="roleName" jdbcType="VARCHAR" />
+	    <result column="role_desc" property="roleDesc" jdbcType="VARCHAR" />
+	    <result column="role_code" property="roleCode" jdbcType="VARCHAR" />
+	    <result column="role_state" property="roleState" jdbcType="CHAR" />
+	    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+	    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+	  </resultMap>
+	  <select id="findAllRole"  resultMap="roleMap">
+	  	select * from role
+	  </select>
+	  <select id="findIdByRoleName" parameterType="String" resultMap="roleMap">
+	  	select * from role where role_name=#{roleName}
+	  </select>
+	<!-- 添加权限时，用父Id查询 权限的名字-->
+	 <select id="findAuthNamesByPid" parameterType="Integer" resultType="String">
+	  	SELECT GROUP_CONCAT(auth_name) FROM auth_info WHERE parent_id=#{parentId}
+	  </select>
+	  <!-- 查询权限Code -->
+	  <select id="findAuthByCode" parameterType="String" resultMap="authInfoResultMap">
+	  		select * from auth_info where auth_code =  #{authCode}
+	  </select>
+	  <!-- 查询权限URL -->
+	  <select id="findAuthByURL" parameterType="String" resultMap="authInfoResultMap">
+	  		select * from auth_info where auth_url =  #{authUrl}
+	  </select>
+	  
+	  
+	<!-- 点击添加权限按钮时，添加权限 -->
+	<insert id="insertSelectiveAuth" parameterType="AuthInfo" >
+    insert into auth_info
+	    <trim prefix="(" suffix=")" suffixOverrides="," >
+		     <if test="parentId != null" >
+		        parent_id,
+		      </if>
+	    
+	    	<if test="authName != null" >
+	         auth_name,
+	        </if>
+	        
+	        <if test="authDesc != null" >
+	         auth_desc,
+	        </if>
+	        
+            <if test="authUrl != null" >
+      		 auth_url,
+     		</if>
+     		
+     		 <if test="authCode != null" >
+		       auth_code,
+		     </if>
+		     
+		     <if test="authGrade != null" >
+        		auth_grade,
+		      </if>
+		      
+		      <if test="authType != null" >
+		        auth_type,
+		      </if>
+		 </trim>
+		 <trim prefix="values (" suffix=")" suffixOverrides="," >
+		      <if test="parentId != null" >
+		        #{parentId,jdbcType=INTEGER},
+		      </if>
+		 
+		 	  <if test="authName != null" >
+		        #{authName,jdbcType=VARCHAR},
+		      </if>
+		      
+		      <if test="authDesc != null" >
+		        #{authDesc,jdbcType=VARCHAR},
+		      </if>
+		      
+		       <if test="authUrl != null" >
+		        #{authUrl,jdbcType=VARCHAR},
+		      </if>
+		      
+		      <if test="authCode != null" >
+		        #{authCode,jdbcType=VARCHAR},
+		      </if>
+		      
+		       <if test="authGrade != null" >
+		        #{authGrade,jdbcType=INTEGER},
+		      </if>
+		      
+		      <if test="authType != null" >
+		        #{authType,jdbcType=CHAR},
+		      </if>
+		 </trim>
+	</insert>
+<!-- 修改权限时的回显 -->
+	<select id="finndAuthInfoById"  parameterType="Integer" resultMap="authInfoResultMap"  >
+	 	select * from auth_info where auth_id =  #{authId}
+	 </select>
+	 <!--  修改权限时点击了添加按钮后 -->
+	 <update id="updateThisAuth" parameterType="AuthInfo" >
+	 	update auth_info set auth_name = #{authName},auth_desc = #{authDesc} where auth_id=#{authId}
+	 </update>
+	 <!-- 删除权限，将权限的state变为0，禁用 -->
+	  <update id="deleteThisAuth" parameterType="AuthInfo" >
+	 	update auth_info set auth_state = 0 where auth_id=#{authId}
+	 </update>
+	 <!-- 恢复权限，将权限的state变为1，启用 -->
+	<update id="regainThisAuth" parameterType="AuthInfo" >
+	 	update auth_info set auth_state = 1 where auth_id=#{authId}
+	</update>
+	 
+	  
+	  
+	  
+	  
+</mapper>

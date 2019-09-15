@@ -1,0 +1,65 @@
+package com.byzx.authority.vo;
+
+
+
+public class Specification {
+    private Integer spcId;
+
+    private Integer typeId;
+
+    private String spcName;
+
+    private String state;
+
+    private Integer rank;
+
+    private String specCode;
+
+    public Integer getSpcId() {
+        return spcId;
+    }
+
+    public void setSpcId(Integer spcId) {
+        this.spcId = spcId;
+    }
+
+    public Integer getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(Integer typeId) {
+        this.typeId = typeId;
+    }
+
+    public String getSpcName() {
+        return spcName;
+    }
+
+    public void setSpcName(String spcName) {
+        this.spcName = spcName == null ? null : spcName.trim();
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state == null ? null : state.trim();
+    }
+
+    public Integer getRank() {
+        return rank;
+    }
+
+    public void setRank(Integer rank) {
+        this.rank = rank;
+    }
+
+    public String getSpecCode() {
+        return specCode;
+    }
+
+    public void setSpecCode(String specCode) {
+        this.specCode = specCode == null ? null : specCode.trim();
+    }
+}

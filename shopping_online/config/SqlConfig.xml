@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<settings>
+		<!-- 设置打印出详细的日志 -->
+		<setting name="logImpl" value="LOG4J"></setting>
+	</settings>
+		<!-- 起别名 -->
+	<typeAliases>
+		<package name="com.byzx.authority.vo"/>
+	</typeAliases>
+	<!-- 使用spring数据源(省略) -->
+	<!-- spring中mapper扫描器关联mapper.xml和mapper接口 -->
+	<!-- 配置分页查询的信息 -->
+	<plugins>
+		<plugin interceptor="com.github.pagehelper.PageHelper">
+        </plugin>
+	</plugins>
+</configuration>
+
+
+

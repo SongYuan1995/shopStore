@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byzx.authority.dao.ProductListMapper">
+	
+	
+  <!-- 商品表resultMap -->
+	 <resultMap id="ProductMap" type="com.byzx.authority.vo.Product" >
+	    <id column="pro_id" property="proId" jdbcType="INTEGER" />
+	    <result column="store_id" property="storeId" jdbcType="INTEGER" />
+	    <result column="type_id" property="typeId" jdbcType="INTEGER" />
+	    <result column="brand_id" property="brandId" jdbcType="INTEGER" />
+	    <result column="pro_name" property="proName" jdbcType="VARCHAR" />
+	    <result column="pro_supply" property="proSupply" jdbcType="INTEGER" />
+	    <result column="pro_address" property="proAddress" jdbcType="INTEGER" />
+	    <result column="sell_count" property="sellCount" jdbcType="INTEGER" />
+	    <result column="pro_pic" property="proPic" jdbcType="VARCHAR" />
+	    <result column="inventory" property="inventory" jdbcType="INTEGER" />
+	    <result column="pro_up_down" property="proUpDown" jdbcType="CHAR" />
+	    <result column="pro_start_date" property="proStartDate" jdbcType="TIMESTAMP" />
+	    <result column="pro_end_date" property="proEndDate" jdbcType="TIMESTAMP" />
+	    <result column="is_plat" property="isPlat" jdbcType="CHAR" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	     <association property="brand" javaType="Brand">
+	    	<result column="brand_name" property="brandName" jdbcType="VARCHAR" />
+	    </association> 
+	    <association property="proType" javaType="ProType">
+	    	<result column="type_name" property="typeName" jdbcType="VARCHAR" />
+	    </association> 
+  </resultMap>
+  
+	<!-- 商品表信息展示 -->
+	<select id = "queryProductList" parameterType="Map" resultMap="ProductMap">
+		SELECT DISTINCT product.*,brand.brand_name,pt.`type_name`
+		FROM product,user_info,pro_type,brand,pro_type pt
+		<where>
+			AND user_info.`store_id` = #{USERINFO.storeId}
+			AND  product.`brand_id` = brand.`brand_id`
+			AND  pt.`type_id` = product.`type_id`
+			<if test="likeQuery!=null">
+				<if test="likeQuery.proName!=null and likeQuery.proName!=''">
+				 	and product.pro_name like concat("%",#{likeQuery.proName},"%")
+				</if>
+				  <if test="likeQuery.typeName!=null and likeQuery.typeName!=''">
+					and product.`type_id` = pro_type.`type_id` AND pro_type.`type_name` = #{likeQuery.typeName}
+				</if> 
+				<if test="likeQuery.proUpDown!=null and likeQuery.proUpDown!=''">
+					and product.pro_up_down =#{likeQuery.proUpDown}
+				</if>
+			</if>
+			
+			<if test="proState!=null">
+				<if test="proState == 1">
+					 and product.pro_end_date &gt; now()
+				</if>
+				<if test="proState == 0">
+				 	and product.pro_end_date &lt; now()
+				</if>
+			</if>
+		</where>
+		<if test="Order!=null and Order!=''">
+			<if test="Order=='asc'">
+				order by product.sell_count ASC
+			</if>
+			<if test="Order=='desc'">
+				order by product.sell_count DESC
+			</if>
+		</if>
+		<if test="pageUtil!=null">
+			limit #{pageUtil.limitIndex},#{pageUtil.pageSize}
+		</if>
+		
+		
+	</select>
+	
+	
+	
+	<!-- 更改商品上下架状态 -->
+	<update id="updateProUpDown" parameterType="Product">
+		
+		update product set pro_up_down = #{proUpDown} 
+		where pro_id = #{proId}
+	
+	</update>
+	
+	
+	
+	<!-- 修改商品图品的src -->
+	<update id="updateProPic" parameterType="Product">
+		
+		update product set pro_pic = #{proPic} 
+		where pro_id = #{proId}
+	
+	</update>
+	
+	  <resultMap id="BrandMap" type="com.byzx.authority.vo.Brand" >
+    <id column="brand_id" property="brandId" jdbcType="INTEGER" />
+    <result column="brand_name" property="brandName" jdbcType="VARCHAR" />
+    <result column="brand_leter" property="brandLeter" jdbcType="CHAR" />
+    <result column="brand_desc" property="brandDesc" jdbcType="VARCHAR" />
+  </resultMap>
+	<!-- 全查品牌表，为修改商品信息中的品牌下拉列表准备数据 -->
+		<select id="findAllBrandName" resultMap="BrandMap">
+			select *  from brand
+		</select>
+
+		<!-- 全查分类表 -->
+  <resultMap id="ProTypeMap" type="com.byzx.authority.vo.ProType" >
+    <id column="type_id" property="typeId" jdbcType="INTEGER" />
+    <result column="type_name" property="typeName" jdbcType="VARCHAR" />
+    <result column="type_desc" property="typeDesc" jdbcType="VARCHAR" />
+    <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+    <result column="specIds" property="specids" jdbcType="VARCHAR" />
+  </resultMap>
+	<select id="findProType" resultMap="ProTypeMap" parameterType="Product">
+		select * from pro_type
+	</select>
+	
+	<!-- 查询指定商品分类 -->
+		<select id = "findTypeByTypeId" parameterType="Product" resultMap="ProTypeMap">
+			select pro_type.* from pro_type,product
+			where pro_type.type_id = product.type_id and product.pro_id = #{proId}
+		</select>
+	
+	<!-- 修改指定商品分类 -->
+		<update id="updateType" parameterType="Product" >
+			update product set type_id = #{typeId}
+			where pro_id = #{proId}
+		
+		</update>
+	<!-- 全查产地表 -->
+  <resultMap id="AddressMap" type="com.byzx.authority.vo.Address" >
+    <id column="addr_id" property="addrId" jdbcType="INTEGER" />
+    <result column="addr_info" property="addrInfo" jdbcType="VARCHAR" />
+    <result column="post_code" property="postCode" jdbcType="VARCHAR" />
+    <result column="reap_person" property="reapPerson" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="is_default" property="isDefault" jdbcType="CHAR" />
+  </resultMap>
+	
+	<select id="queryAllAddress"  resultMap="AddressMap">
+		select * from  address
+	</select>
+	
+
+	
+	
+	<!-- 全查供货商表 -->
+  <resultMap id="SupplyMap" type="com.byzx.authority.vo.Supply" >
+    <id column="supply_id" property="supplyId" jdbcType="INTEGER" />
+    <result column="supply_num" property="supplyNum" jdbcType="VARCHAR" />
+    <result column="supply_name" property="supplyName" jdbcType="VARCHAR" />
+    <result column="concat" property="concat" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+  </resultMap>
+	
+	<select id="queryAllSupply"  resultMap="SupplyMap">
+		select * from  supply
+	</select>
+	
+	<!-- 添加product表 -->
+		 <insert id="insertProduct" parameterType="HashMap" >
+			insert into product (store_id,type_id,brand_id,pro_name,pro_supply,pro_address,pro_pic,inventory,pro_info,pro_start_date,pro_end_date,is_plat)
+			values(#{USERINFO.storeId},#{PRODUCT.typeId},#{PRODUCT.brandId},#{PRODUCT.proName},#{PRODUCT.proSupply},#{PRODUCT.proAddress},
+					#{PRODUCT.proPic},#{PRODUCT.inventory},#{PRODUCT.proInfo},#{PRODUCT.proStartDate},#{PRODUCT.proEndDate},#{PRODUCT.isPlat})
+		</insert> 
+	
+		<!-- 根据proId查找商品信息 -->
+		<select id="findProById" resultMap="ProductMap" parameterType="Product">
+				select * from product 
+				where pro_id =#{proId}
+		</select>
+		
+		
+		
+		<!-- 修改产品信息 -->
+	<update id="updateProInfo" parameterType="map" >
+    update product
+    <set >
+      <if test="record.storeId != null" >
+        store_id = #{record.storeId,jdbcType=INTEGER},
+      </if>
+      <if test="record.typeId != null" >
+        type_id = #{record.typeId,jdbcType=INTEGER},
+      </if>
+      <if test="record.brandId != null" >
+        brand_id = #{record.brandId,jdbcType=INTEGER},
+      </if>
+      <if test="record.proName != null" >
+        pro_name = #{record.proName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.proSupply != null" >
+        pro_supply = #{record.proSupply,jdbcType=INTEGER},
+      </if>
+      <if test="record.proAddress != null" >
+        pro_address = #{record.proAddress,jdbcType=INTEGER},
+      </if>
+      <if test="record.sellCount != null" >
+        sell_count = #{record.sellCount,jdbcType=INTEGER},
+      </if>
+      <if test="record.proPic != null" >
+        pro_pic = #{record.proPic,jdbcType=VARCHAR},
+      </if>
+      <if test="record.inventory != null" >
+        inventory = #{record.inventory,jdbcType=INTEGER},
+      </if>
+      <if test="record.proUpDown != null" >
+        pro_up_down = #{record.proUpDown,jdbcType=CHAR},
+      </if>
+      <if test="record.proStartDate != null" >
+        pro_start_date = #{record.proStartDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.proEndDate != null" >
+        pro_end_date = #{record.proEndDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.isPlat != null" >
+        is_plat = #{record.isPlat,jdbcType=CHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.proInfo != null" >
+        pro_info = #{record.proInfo,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    <where>
+    	<if test="record.proId != null">
+    		and pro_id = #{record.proId}
+    	</if>
+	    
+    </where>
+  </update>
+		
+  <resultMap id="SpecMap" type="com.byzx.authority.vo.Specification" >
+    <id column="spc_id" property="spcId" jdbcType="INTEGER" />
+    <result column="type_id" property="typeId" jdbcType="INTEGER" />
+    <result column="spc_name" property="spcName" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="CHAR" />
+    <result column="rank" property="rank" jdbcType="INTEGER" />
+    <result column="spec_code" property="specCode" jdbcType="VARCHAR" />
+    <collection property="dictionary" ofType="Dictionary">
+    	 <id column="dic_id" property="dicId" jdbcType="INTEGER" />
+	    <result column="spc_id" property="spcId" jdbcType="INTEGER" />
+	    <result column="dic_name" property="dicName" jdbcType="VARCHAR" />
+	    <result column="state" property="state" jdbcType="CHAR" />
+	    <result column="rank" property="rank" jdbcType="INTEGER" />
+    </collection>
+  </resultMap>
+		
+		<!-- 根据商品分类查询商品特性及特性值 -->
+		<select id="findSpecAndDicByTypeId" parameterType="Integer" resultMap="SpecMap">
+					
+			SELECT * 
+			FROM specification spe,dictionary dic
+			WHERE  	type_id = #{typeId} AND
+				spe.`spc_id` = dic.`spc_id`
+			
+		</select>
+		
+	<!-- 生成sku -->
+		 <insert id="insertSku" parameterType="com.byzx.authority.vo.ProSku" >
+    insert into pro_sku
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="skuId != null" >
+        sku_id,
+      </if>
+      <if test="proId != null" >
+        pro_id,
+      </if>
+      <if test="inPrice != null" >
+        in_price,
+      </if>
+      <if test="sellPrice != null" >
+        sell_price,
+      </if>
+      <if test="inventory != null" >
+        inventory,
+      </if>
+      <if test="skuPic != null" >
+        sku_pic,
+      </if>
+      <if test="state != null" >
+        state,
+      </if>
+      <if test="dicids != null" >
+        dicIds,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="skuId != null" >
+        #{skuId,jdbcType=INTEGER},
+      </if>
+      <if test="proId != null" >
+        #{proId,jdbcType=INTEGER},
+      </if>
+      <if test="inPrice != null" >
+        #{inPrice,jdbcType=REAL},
+      </if>
+      <if test="sellPrice != null" >
+        #{sellPrice,jdbcType=REAL},
+      </if>
+      <if test="inventory != null" >
+        #{inventory,jdbcType=REAL},
+      </if>
+      <if test="skuPic != null" >
+        #{skuPic,jdbcType=VARCHAR},
+      </if>
+      <if test="state != null" >
+        #{state,jdbcType=CHAR},
+      </if>
+      <if test="dicids != null" >
+        #{dicids,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+		
+		
+		<!-- 查询商品已有sku -->
+  <resultMap id="ProSkuMap" type="com.byzx.authority.vo.ProSku" >
+    <id column="sku_id" property="skuId" jdbcType="INTEGER" />
+    <result column="pro_id" property="proId" jdbcType="INTEGER" />
+    <result column="in_price" property="inPrice" jdbcType="REAL" />
+    <result column="sell_price" property="sellPrice" jdbcType="REAL" />
+    <result column="inventory" property="inventory" jdbcType="REAL" />
+    <result column="sku_pic" property="skuPic" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="CHAR" />
+    <result column="dicIds" property="dicids" jdbcType="VARCHAR" />
+  </resultMap>
+		<select id="findAllSkuByProId" parameterType="Integer" resultMap="ProSkuMap">
+		
+			select * from pro_sku
+			where pro_id = #{proId}
+		
+		</select>
+		
+		
+		<!-- 修改proSku -->
+ <update id="updateProSku" parameterType="com.byzx.authority.vo.ProSku" >
+    update pro_sku
+    <set >
+      <if test="proId != null" >
+        pro_id = #{proId,jdbcType=INTEGER},
+      </if>
+      <if test="inPrice != null" >
+        in_price = #{inPrice,jdbcType=REAL},
+      </if>
+      <if test="sellPrice != null" >
+        sell_price = #{sellPrice,jdbcType=REAL},
+      </if>
+      <if test="inventory != null" >
+        inventory = #{inventory,jdbcType=REAL},
+      </if>
+      <if test="skuPic != null" >
+        sku_pic = #{skuPic,jdbcType=VARCHAR},
+      </if>
+      <if test="state != null" >
+        state = #{state,jdbcType=CHAR},
+      </if>
+      <if test="dicids != null" >
+        dicIds = #{dicids,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where sku_id = #{skuId,jdbcType=INTEGER}
+  </update>
+		
+		
+		<!-- 删除sku -->
+	<delete id="deleteSku" parameterType="Integer">
+	
+		delete from pro_sku	
+		where sku_id = #{skuId}
+		
+	</delete>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	
+</mapper>
+		
+		
+		
+		
+
+

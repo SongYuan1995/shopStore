@@ -1,0 +1,137 @@
+package com.byzx.authority.vo;
+
+public class OrderInfo {
+    private Integer orderId;
+
+    private String orderNum;
+
+    private Integer storeId;
+
+    private Integer addrId;
+
+    private Float totalMoney;
+
+    private String payWay;
+
+    private String orderState;
+
+    private String cartState;
+
+    private String createTime;
+
+    private Integer userId;
+
+    private MemberInfo memberInfo;
+    
+    private Invoice invoice;
+
+	public Integer getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(Integer orderId) {
+		this.orderId = orderId;
+	}
+
+	public String getOrderNum() {
+		return orderNum;
+	}
+
+	public void setOrderNum(String orderNum) {
+		this.orderNum = orderNum;
+	}
+
+	public Integer getStoreId() {
+		return storeId;
+	}
+
+	public void setStoreId(Integer storeId) {
+		this.storeId = storeId;
+	}
+
+	public Integer getAddrId() {
+		return addrId;
+	}
+
+	public void setAddrId(Integer addrId) {
+		this.addrId = addrId;
+	}
+
+	public Float getTotalMoney() {
+		return totalMoney;
+	}
+
+	public void setTotalMoney(Float totalMoney) {
+		this.totalMoney = totalMoney;
+	}
+
+	public String getPayWay() {
+		return payWay;
+	}
+
+	public void setPayWay(String payWay) {
+		this.payWay = payWay;
+	}
+
+	public String getOrderState() {
+		return orderState;
+	}
+
+	public void setOrderState(String orderState) {
+		this.orderState = orderState;
+	}
+
+	public String getCartState() {
+		return cartState;
+	}
+
+	public void setCartState(String cartState) {
+		this.cartState = cartState;
+	}
+
+	public String getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+
+	public Integer getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Integer userId) {
+		this.userId = userId;
+	}
+
+	public MemberInfo getMemberInfo() {
+		return memberInfo;
+	}
+
+	public void setMemberInfo(MemberInfo memberInfo) {
+		this.memberInfo = memberInfo;
+	}
+
+	public Invoice getInvoice() {
+		return invoice;
+	}
+
+	public void setInvoice(Invoice invoice) {
+		this.invoice = invoice;
+	}
+
+	@Override
+	public String toString() {
+		return "OrderInfo [orderId=" + orderId + ", orderNum=" + orderNum + ", storeId=" + storeId + ", addrId="
+				+ addrId + ", totalMoney=" + totalMoney + ", payWay=" + payWay + ", orderState=" + orderState
+				+ ", cartState=" + cartState + ", createTime=" + createTime + ", userId=" + userId + ", memberInfo="
+				+ memberInfo + ", invoice=" + invoice + "]";
+	}
+    
+    
+    
+    
+    
+   
+}

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byzx.authority.dao.ShopMapper">
+
+<resultMap id="ShopStore" type="com.byzx.authority.vo.ShopStore" >
+    <id column="store_id" property="storeId" jdbcType="INTEGER" />
+    <result column="store_name" property="storeName" jdbcType="VARCHAR" />
+    <result column="store_level" property="storeLevel" jdbcType="INTEGER" />
+    <result column="store_host" property="storeHost" jdbcType="VARCHAR" />
+    <result column="store_phone" property="storePhone" jdbcType="VARCHAR" />
+    <result column="store_agree" property="storeAgree" jdbcType="INTEGER" />
+    <result column="store_state" property="storeState" jdbcType="CHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <!-- 查询全部店铺    -->
+	<select id="fullCheckShop" parameterType="HashMap" resultMap="ShopStore">
+		select * from shop_store 
+		<where>
+			<if test="ShopStore.storeState != null and ShopStore.storeState != '' and ShopStore.storeState != 99" >
+				AND store_state=#{ShopStore.storeState}
+			</if>
+			<if test="ShopStore.storeName != null and ShopStore.storeName != ''">
+				AND store_name LIKE concat("%",#{ShopStore.storeName},"%") 
+			</if>
+		</where>
+		<if test="PageUtil != null">
+			LIMIT #{PageUtil.limitIndex},#{PageUtil.pageSize}
+		</if>
+	</select>
+<resultMap id="UserInfoMap" type="com.byzx.authority.vo.UserInfo" >
+    <id column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="shop_id" property="shopId" jdbcType="INTEGER" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+    <result column="user_code" property="userCode" jdbcType="VARCHAR" />
+    <result column="user_pwd" property="userPwd" jdbcType="VARCHAR" />
+    <result column="user_type" property="userType" jdbcType="CHAR" />
+    <result column="user_state" property="userState" jdbcType="CHAR" />
+    <result column="is_delete" property="isDelete" jdbcType="CHAR" />
+    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>	
+	<!-- 查询所有店长 -->
+	<select id="queryAllBoss" resultMap="UserInfoMap">
+		select * from user_info where user_type=3
+	</select>
+	
+	<!-- 禁用启用 -->
+	<update id="adminStatus" parameterType="ShopStore">
+		update shop_store 
+		<set>
+			<if test="storeState == 0">
+				store_state='1'
+			</if>
+			<if test="storeState == 1">
+				store_state='0'
+			</if>
+		</set>
+		where store_id=#{storeId}
+	</update>
+
+	<!-- 添加店铺 -->
+	<insert id="addShop" parameterType="ShopStore">
+		INSERT INTO `shopping`.`shop_store` (`store_name`, `store_level` , `store_host` , `store_phone` , `store_agree` , `store_intro`) VALUES (#{storeName}, 0 , #{storeHost}, #{storePhone}, 0 , #{storeIntro}) 
+	</insert>
+	<!-- 添加时给店长绑定店铺 -->
+	<update id="bindingShop" parameterType="String">
+		UPDATE user_info ui SET ui.shop_id=(SELECT MAX(store_id) store_id FROM shop_store) WHERE ui.user_id=#{userId}
+	</update>
+	<!-- 查询店铺名是否重复   -->
+	<select id="repeatShop" parameterType="ShopStore" resultType="String">
+		select store_id from shop_store where store_name=#{storeName}
+	</select>
+
+	<!-- 查询店长是否绑定店铺 -->
+	<select id="repeatBoss" parameterType="String" resultType="String">
+		SELECT shop_id FROM user_info WHERE user_code=#{userCode}
+	</select>
+	<!-- 更新店铺信息时把原店长店铺清空 -->
+	<update id="bindingShopIsNull" parameterType="String">
+		UPDATE user_info ui,(SELECT user_id FROM user_info WHERE user_code=(SELECT store_host FROM shop_store WHERE store_id=#{shopId})) uid SET ui.shop_id=NULL WHERE ui.user_id=uid.user_id
+	</update>
+	<!-- 更新店铺信息 -->
+	<update id="updateShop" parameterType="ShopStore">
+		UPDATE `shopping`.`shop_store` SET `store_name` = #{storeName} , `store_intro` = #{storeIntro} , `store_host` = #{storeHost} , `store_phone` = #{storePhone}  WHERE `store_id` = #{storeId};
+	</update>
+	<!-- 更新时给店长绑定店铺 -->
+	<update id="updateBoss" parameterType="HashMap">
+		update user_info set shop_id=#{shopId} where user_id=#{userId}
+	</update>
+
+
+
+	<!-- 店长登录查询店铺 -->
+	<select id="bossShop" parameterType="UserInfo" resultMap="ShopStore">
+		select * from shop_store where store_host=#{userCode}
+	</select>
+
+
+
+
+</mapper>

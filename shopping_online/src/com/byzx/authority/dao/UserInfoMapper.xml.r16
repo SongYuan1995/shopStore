@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace的值为mapper接口的全路径  包名.接口名 -->
+<mapper namespace="com.byzx.authority.dao.UserInfoMapper">
+	<!-- 用用户名user_code和密码user_pwd来查询user_info表 -->
+	 <resultMap id="userInfoResultMap" type="UserInfo" >
+	    <id column="user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="group_id" property="groupId" jdbcType="INTEGER" />
+	    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+	    <result column="user_code" property="userCode" jdbcType="VARCHAR" />
+	    <result column="user_pwd" property="userPwd" jdbcType="VARCHAR" />
+	    <result column="user_type" property="userType" jdbcType="CHAR" />
+	    <result column="user_state" property="userState" jdbcType="CHAR" />
+	    <result column="is_delete" property="isDelete" jdbcType="CHAR" />
+	    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+	    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+	    <result column="store_id" property="storeId" jdbcType="INTEGER" />
+	  </resultMap>
+	<select id="findUserByCodeAndPwd" parameterType="ParameterTypeQuery" resultMap="userInfoResultMap">
+		SELECT * FROM user_info
+		<!--  WHERE user_code=#{userCode} AND user_pwd=MD5(#{userPwd}) -->
+		<where>
+			<if test="null!=userInfo">
+			  <if test="userInfo.userId!=null and userInfo.userId!=''">
+			  	 and user_info.user_id = #{userInfo.userId}
+			  </if>
+			  <!-- 登录时的用户名 -->
+			  <if test="userInfo.userCode!=null and userInfo.userCode!=''">
+			  	 and user_info.user_code = #{userInfo.userCode}
+			  </if>
+			  	<!-- 登录时的密码 -->
+			  <if test="userInfo.userPwd!=null and userInfo.userPwd!=''">
+			  	 and user_info.user_pwd = MD5(#{userInfo.userPwd})
+			  </if>
+			</if>
+			and is_delete=0;
+		</where>
+	</select>
+	<!-- 模糊查询 -->
+	<!-- 查询user信息三表联查 -->
+	 <resultMap id="fuzzyResultMap" type="UserInfo" >
+	    <id column="user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="group_id" property="groupId" jdbcType="INTEGER" />
+	    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+	    <result column="user_code" property="userCode" jdbcType="VARCHAR" />
+	    <result column="user_pwd" property="userPwd" jdbcType="VARCHAR" />
+	    <result column="user_type" property="userType" jdbcType="CHAR" />
+	    <result column="user_state" property="userState" jdbcType="CHAR" />
+	    <result column="is_delete" property="isDelete" jdbcType="CHAR" />
+	    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+	    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+		    <association property="userGroup" javaType="UserGroup">
+		    	 <id column="group_id" property="groupId" jdbcType="INTEGER" />
+			    <result column="group_name" property="groupName" jdbcType="VARCHAR" />
+			    <result column="group_code" property="groupCode" jdbcType="VARCHAR" />
+			    <result column="group_desc" property="groupDesc" jdbcType="VARCHAR" />
+			    <result column="group_state" property="groupState" jdbcType="CHAR" />
+		    </association>
+		     <collection property="role" ofType="Role">
+					<id column="role_id" property="roleId" jdbcType="INTEGER" />
+				    <result column="role_name" property="roleName" jdbcType="VARCHAR" />
+				    <result column="role_desc" property="roleDesc" jdbcType="VARCHAR" />
+				    <result column="role_code" property="roleCode" jdbcType="VARCHAR" />
+				    <result column="role_state" property="roleState" jdbcType="CHAR" />
+				    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+				    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+				    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+				    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+		    </collection>
+	  </resultMap>
+	<select id="findUserFuzzy" parameterType="ParameterTypeQuery" resultMap="fuzzyResultMap">
+		SELECT ui.*,ug.*,r.* FROM user_info ui,user_group ug,role r   
+		
+		<where>
+		 	ui.group_id=ug.group_id AND ui.user_type = r.role_id and ui.is_delete=0
+			<if test="null!=userInfo">
+			  <!-- 模糊查询时的userCode -->
+			   <if test="userInfo.userCode!=null and userInfo.userCode!=''">
+			  	 and ui.user_code like concat("%",#{userInfo.userCode},"%")
+			  </if>
+			  <!-- 模糊查询时的userType -->
+			  <if test="userInfo.userType!=null and userInfo.userType!=''">
+			  	 and ui.user_type = #{userInfo.userType}
+			  </if>
+			  <!-- 模糊查询时的userState -->
+			  <if test="userInfo.userState!=null and userInfo.userState!=''">
+			  	 and ui.user_state = #{userInfo.userState}
+			  </if>
+			</if>
+		</where>
+	</select>
+	<!-- 全查user_group表 -->
+	<resultMap id="UserGroupResultMap" type="UserGroup" >
+	    <id column="group_id" property="groupId" jdbcType="INTEGER" />
+	    <result column="group_name" property="groupName" jdbcType="VARCHAR" />
+	    <result column="group_code" property="groupCode" jdbcType="VARCHAR" />
+	    <result column="group_desc" property="groupDesc" jdbcType="VARCHAR" />
+	    <result column="group_state" property="groupState" jdbcType="CHAR" />
+	</resultMap>
+	<!-- 全查user_group表 -->
+	<select id="findAllUserGroup" resultMap="UserGroupResultMap" >
+		select * from user_group 
+	</select>
+	<!-- 根据用户组名查询用户组对应的id -->
+	<select id="findUserGroupByName" parameterType="String" resultMap="UserGroupResultMap" >
+		SELECT * FROM user_group WHERE group_name=#{groupName}
+	</select>
+	<!-- 根据用户组id查询用户组对应的用户组信息 -->
+	<select id="findUserGroupById" parameterType="Integer" resultMap="UserGroupResultMap" >
+		SELECT * FROM user_group WHERE group_id=#{groupId}
+	</select>
+
+	
+	<!-- 添加一条用户信息是执行的sql语句 -->
+	<insert id="addUserInfo" parameterType="UserInfo">
+		INSERT INTO user_info (user_code,nick_name,group_id,user_pwd) 
+			VALUES(#{userCode},#{nickName},#{groupId},MD5(#{userPwd}))
+	</insert>
+	
+	<!-- 修改user_info表 ,采用动态sql-->
+	<update id="updateByPrimaryKeyUserInfo" parameterType="HashMap" >
+    update user_info
+    <set >
+      <if test="userInfo.groupId != null" >
+        group_id = #{userInfo.groupId},
+      </if>
+      
+      <if test="userInfo.nickName != null" >
+         nick_name = #{userInfo.nickName},
+      </if>
+      <!-- 删除 -->
+      <if test="userInfo.isDelete != null" >
+        is_delete = #{userInfo.isDelete,jdbcType=CHAR},
+      </if>
+      <!-- 状态 -->
+      <if test="userInfo.userState != null" >
+        user_state = #{userInfo.userState,jdbcType=CHAR},
+      </if>
+      <!-- 重置密码 -->
+      <if test="userInfo.userPwd != null" >
+        user_pwd = MD5(#{userInfo.userPwd,jdbcType=VARCHAR}),
+      </if>
+      
+    </set>
+    <where>
+     <if test="userInfo.userCode != null" >
+    	user_code = #{userInfo.userCode}
+     </if>
+     
+    </where> 
+  </update>
+  <!-- 全查userInfo表,动态sql -->
+  <select id="findAllUserInfo" parameterType="hashMap" resultMap="fuzzyResultMap">
+  SELECT ui.*,ug.*,r.* FROM user_info ui,user_group ug,role r   
+		<where>
+		 	ui.group_id=ug.group_id AND ui.user_type = r.role_id and ui.is_delete=0
+			<if test="null!=userInfo">
+			  <!-- 模糊查询时的userCode -->
+			   <if test="userInfo.userCode!=null and userInfo.userCode!=''">
+			  	 and ui.user_code like concat("%",#{userInfo.userCode},"%")
+			  </if>
+			  <!-- 模糊查询时的userType -->
+			  <if test="userInfo.userType!=null and userInfo.userType!=''">
+			  	 and ui.user_type = #{userInfo.userType}
+			  </if>
+			  <!-- 模糊查询时的userState -->
+			  <if test="userInfo.userState!=null and userInfo.userState!=''">
+			  	 and ui.user_state = #{userInfo.userState}
+			  </if>
+			</if>
+		</where>
+  </select>
+  
+  <!-- 查询当前用户角色id，返回一个字符串 -->
+  <select id="findAllRoleIdString" parameterType="Integer" resultType="String">
+  	SELECT GROUP_CONCAT(role_id) FROM user_role WHERE user_id=#{userId}	
+  </select>
+  <!-- 全查role表，展示在用户分配角色的框里 -->
+   <resultMap id="baseResultRoleMap" type="Role" >
+	    <id column="role_id" property="roleId" jdbcType="INTEGER" />
+	    <result column="role_name" property="roleName" jdbcType="VARCHAR" />
+	    <result column="role_desc" property="roleDesc" jdbcType="VARCHAR" />
+	    <result column="role_code" property="roleCode" jdbcType="VARCHAR" />
+	    <result column="role_state" property="roleState" jdbcType="CHAR" />
+	    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+	    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  	<select id="findAssignAllRoles"  resultMap="baseResultRoleMap">
+  		SELECT * FROM role
+  	</select>
+  	<!-- 删除该用户对应的用户角色 -->
+  	<delete id="deleteThisUserRoles" parameterType="Integer">
+  		delete from user_role where user_id=#{userId}
+  	</delete>
+  	<!-- reAssignRoles 。。insert一个当前用户一个角色 -->
+  	 <insert id="reAssignRoles" parameterType="UserRole">
+  		insert into user_role (role_id,user_id) values (#{roleId},#{userId})
+  	</insert>
+  	<!-- auth_info表 -->
+  	  <resultMap id="AuthInfoBaseResultMap" type="AuthInfo" >
+	    <id column="auth_id" property="authId" jdbcType="INTEGER" />
+	    <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+	    <result column="auth_name" property="authName" jdbcType="VARCHAR" />
+	    <result column="auth_desc" property="authDesc" jdbcType="VARCHAR" />
+	    <result column="auth_grade" property="authGrade" jdbcType="INTEGER" />
+	    <result column="auth_type" property="authType" jdbcType="CHAR" />
+	    <result column="auth_url" property="authUrl" jdbcType="VARCHAR" />
+	    <result column="auth_code" property="authCode" jdbcType="VARCHAR" />
+	    <result column="auth_order" property="authOrder" jdbcType="INTEGER" />
+	    <result column="auth_state" property="authState" jdbcType="CHAR" />
+	    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+	    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+	    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+	    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+	  </resultMap>
+	  <!-- user_aut表 -->
+	   <resultMap id="userAuthBaseResultMap" type="UserAuth" >
+	   <id column="user_auth_id" property="userAuthId" jdbcType="INTEGER" />
+	   <result column="user_id" property="userId" jdbcType="INTEGER" />
+	   <result column="auth_id" property="authId" jdbcType="INTEGER" />
+	 </resultMap>
+  	<!-- 查询auth_info表 -->
+  	<select id="findAllAuthInfo" resultMap="AuthInfoBaseResultMap">
+  		select * from auth_info
+  	</select>
+  	<!-- 根据当前用户的userId查询，该用户对于的所有的权限Id -->
+  	<select id="findAllAuthIDbyUserId" parameterType="Integer" resultMap="userAuthBaseResultMap">
+  		select * from user_auth where user_id=#{userId}
+  	</select>
+  	<!-- 删除id为userId的当前用户的所有 -->
+  	<delete id="delCurrUserAuthIds" parameterType="Integer">
+  		delete from user_auth where user_id=#{userId} 
+  	</delete>
+  	<!-- 循环给用户添加权限 -->
+  	 <insert id="insertCurrUserAuthId" parameterType="HashMap">
+  		insert into user_auth (user_id,auth_id) values (#{userId},#{authId})
+  	</insert>
+  	
+  
+  		
+  
+ <!--  <select id="findAllRoles" parameterType="hashMap" resultMap="BaseResultRoleMap">
+  		SELECT * FROM role
+  		<where>
+  			<if test="null!=role">
+  				<if test="role.roleId!=null and role.roleId!=''">
+			  	 	and role_id = #{role.roleId}
+			  	</if>
+  			
+  			</if>
+  		</where>
+  </select> -->
+  
+	<!-- 
+      <if test="userInfo.userType != null" >
+        user_type = #{userInfo.userType,jdbcType=CHAR},
+      </if>
+      <if test="userInfo.userState != null" >
+        user_state = #{userInfo.userState,jdbcType=CHAR},
+      </if>
+      
+      <if test="userInfo.createBy != null" >
+        create_by = #{userInfo.createBy,jdbcType=INTEGER},
+      </if>
+      <if test="userInfo.createTime != null" >
+        create_time = #{userInfo.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="userInfo.updateBy != null" >
+        update_by = #{userInfo.updateBy,jdbcType=INTEGER},
+      </if>
+      <if test="userInfo.updateTime != null" >
+        update_time = #{userInfo.updateTime,jdbcType=TIMESTAMP},
+      </if> -->
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<!-- <select id="findUserInfoByCodeAndPwd" parameterType="UserInfo" resultMap="userInfoResultMap">
+		SELECT * FROM user_info WHERE user_code= #{userCode} AND user_pwd = MD5(#{userPwd})
+	</select> -->
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</mapper>

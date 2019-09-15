@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd">        
+	<!-- 自动扫描bean -->
+    <context:component-scan base-package="com.byzx.authority.service.impl"></context:component-scan>
+	
+	<!-- 加载db.properties,classpath:为类路径 -->
+	<context:property-placeholder location="classpath:db.properties"></context:property-placeholder>
+		
+	<!-- 配置c3p0数据源 -->
+	<bean id="c3p0ds" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${jdbc.driver}" ></property>
+		<property name="jdbcUrl" value="${jdbc.url}" ></property>
+		<property name="user" value="${jdbc.username}" ></property>
+		<property name="password" value="${jdbc.password}" ></property>
+		<property name="maxPoolSize" value="30"></property>
+		<property name="initialPoolSize" value="5"></property>
+	</bean>
+	
+	<!-- 配置会话工厂 -->
+	<bean id="ssf" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:SqlConfig.xml"></property>
+		<property name="dataSource" ref="c3p0ds"></property>
+	</bean>
+	<!-- mapper扫描器 -->
+	<!-- 默认会生成一个mappper接口类型首字母小写的bean -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.byzx.authority.dao"></property>
+		<property name="sqlSessionFactoryBeanName" value="ssf"></property>
+	</bean>
+	
+	<!-- 添加事务时 -->
+	<bean id="tm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="c3p0ds"></property>
+	</bean>
+	
+	 
+	 
+	 
+	 <!-- quartz特定方法定时器 -->
+	<bean id="taskinv" class="com.byzx.authority.controller.QuartzCron"></bean>
+	<bean id="methodInv"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="taskinv"></property>
+		<property name="targetMethod" value="run1"></property>
+	</bean>
+	<bean id="cronTriggerBean2" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail" ref="methodInv"></property>
+		<property name="cronExpression" value="* */5 * * * ?"></property>
+	</bean>
+
+<!-- 执行任务 -->
+<!--  	<bean id="scheduler"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers" >
+			<list>
+		  		<ref bean="cronTriggerBean2"/> 
+			</list>
+		</property>
+	</bean>  -->  
+</beans> 

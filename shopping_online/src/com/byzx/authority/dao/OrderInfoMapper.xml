@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.byzx.authority.dao.OrderInfoMapper" >
+  <resultMap id="OrderInfoMap" type="OrderInfo" >
+    <id column="order_id" property="orderId" jdbcType="INTEGER" />
+    <result column="order_num" property="orderNum" jdbcType="VARCHAR" />
+    <result column="store_id" property="storeId" jdbcType="INTEGER" />
+    <result column="addr_id" property="addrId" jdbcType="INTEGER" />
+    <result column="total_money" property="totalMoney" jdbcType="REAL" />
+    <result column="pay_way" property="payWay" jdbcType="CHAR" />
+    <result column="order_state" property="orderState" jdbcType="CHAR" />
+    <result column="cart_state" property="cartState" jdbcType="CHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+      <collection property="memberInfo" ofType="MemberInfo">
+		<id column="user_id" property="userId" jdbcType="INTEGER" />
+	    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+	    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+   	 </collection>
+  </resultMap>
+  
+
+
+  <select id="findOrder" parameterType="HashMap" resultMap="OrderInfoMap"> <!-- 查询订单 -->
+  			SELECT o.*,m.nick_name FROM order_info o,MEMBER_INFO m
+  		<where>
+            and store_id = #{storeid} AND m.`user_id`=o.`user_id`
+  			<if test="order!=null">
+	  			<if test="order.orderNum != null">
+	  					and o.order_num like #{order.orderNum}
+	  			</if>
+	  			<if test="order.payWay!=null and order.payWay!=''">
+	  					and o.pay_way = #{order.payWay}
+	  			</if>
+	  			<if test="order.orderState!=null and order.orderState!=''">
+	  				 	and o.order_state=#{order.orderState}
+	  			</if>
+  			</if>
+	  		<if test="page!=null">
+	  			limit #{page.limitIndex},#{page.pageSize}
+	  		</if>
+        </where> 
+  </select>
+    
+	<select id="timing" resultMap="OrderInfoMap">  <!-- 查看超时30分钟未付款订单 -->
+				SELECT * FROM  `order_info` o
+			 WHERE  o.create_time &lt;=DATE_ADD(NOW(), INTERVAL -30 MINUTE)
+			 and order_state=0
+	</select>
+	
+	<update id="uptiming" parameterType="OrderInfo">
+			update order_info
+   					 set order_state = #{orderState}
+   			where order_id=#{orderId}
+	</update>
+	
+    <select id="findorderstate" resultType="OrderInfo">				<!-- 订单状态 -->
+	SELECT DISTINCT order_state 'orderState' FROM order_info  
+	</select>
+  <select id="findpayway" resultType="OrderInfo">					<!-- 支付方式 -->
+    	SELECT DISTINCT pay_way 'payWay' FROM order_info
+  </select>
+  
+  
+  
+  
+  
+ 	<resultMap id="OrderitemMap" type="OrderItem" >
+    <id column="item_id" property="itemId" jdbcType="INTEGER" />
+    <result column="order_id" property="orderId" jdbcType="INTEGER" />
+    <result column="pro_id" property="proId" jdbcType="INTEGER" />
+    <result column="store_id" property="storeId" jdbcType="INTEGER" />
+    <result column="sku_id" property="skuId" jdbcType="INTEGER" />
+    <result column="pro_name" property="proName" jdbcType="VARCHAR" />
+    <result column="pro_price" property="proPrice" jdbcType="REAL" />
+    <result column="pro_count" property="proCount" jdbcType="INTEGER" />
+    <result column="pro_total" property="proTotal" jdbcType="REAL" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+ </resultMap> 
+  
+ 
+
+   <select id="fandorderitem" parameterType="HashMap" resultMap="OrderitemMap"><!-- 查询订单详情 -->
+  			SELECT om.* FROM order_item om
+			<where>
+            and  om.`order_id`=#{orderid}
+	  		<if test="page!=null">
+	  					limit #{page.limitIndex},#{page.pageSize}
+	  		</if>
+        </where> 	
+  </select> 
+
+  
+<resultMap id="AddressMap" type="Address" >					<!-- 地址map -->
+    <id column="addr_id" property="addrId" jdbcType="INTEGER" />
+    <result column="addr_info" property="addrInfo" jdbcType="VARCHAR" />
+    <result column="post_code" property="postCode" jdbcType="VARCHAR" />
+    <result column="reap_person" property="reapPerson" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="is_default" property="isDefault" jdbcType="CHAR" />
+  </resultMap>
+  
+  <select id="findadd" parameterType="INTEGER" resultMap="AddressMap"><!-- 查询当前订单地址  -->
+  	SELECT * FROM address a WHERE a.`addr_id` IN
+		(SELECT addr_id FROM order_info o WHERE o.`order_id`=#{orderid})
+  </select>
+  
+  
+   <resultMap id="invoice" type="Invoice" >			<!-- 开票map -->
+    <id column="inv_id" property="invId" jdbcType="INTEGER" />
+    <result column="order_id" property="orderId" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="context" property="context" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="CHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="money" property="money" jdbcType="REAL" />
+  </resultMap>
+  
+  	<select id="findinvoice" parameterType="Integer" resultMap="invoice"><!-- 查询开票 -->
+  			 select * from invoice where order_id = #{orderId}
+  	</select>
+  	<update id="upInvoice" parameterType="Invoice"><!-- 修改开票审核  -->
+  		update invoice set state = #{state}
+					where order_id =#{orderId}
+  	</update>
+  	
+ <!-- 发货单MAP -->
+ <resultMap id="DeliverListMap" type="DeliverList" >
+    <id column="deliver_id" property="deliverId" jdbcType="INTEGER" />
+    <result column="order_id" property="orderId" jdbcType="INTEGER" />
+    <result column="deliver_num" property="deliverNum" jdbcType="VARCHAR" />
+    <result column="sku_id" property="skuId" jdbcType="INTEGER" />
+    <result column="state" property="state" jdbcType="CHAR" />
+    <result column="deliver_info" property="deliverInfo" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+  </resultMap>
+ 	<!-- 查询发货 -->
+ 	<select id="finddeliver" parameterType="Integer" resultMap="DeliverListMap"> 	
+ 		select * from deliver_list 
+ 			where order_id = #{orderid}
+ 	</select>
+ 	<!-- 修改发货单 -->
+ 	
+ 	<update id="updeliver" parameterType="DeliverList">
+ 			update deliver_list set state = #{state},
+ 						deliver_num = #{deliverNum}
+					where order_id =#{orderId}
+ 	</update>
+ 	<!--店铺map  -->
+ 	<resultMap id="ShopStoreMap" type="ShopStore" >
+    <id column="store_id" property="storeId" jdbcType="INTEGER" />
+    <result column="store_name" property="storeName" jdbcType="VARCHAR" />
+    <result column="store_level" property="storeLevel" jdbcType="INTEGER" />
+    <result column="store_host" property="storeHost" jdbcType="VARCHAR" />
+    <result column="store_phone" property="storePhone" jdbcType="VARCHAR" />
+    <result column="store_agree" property="storeAgree" jdbcType="INTEGER" />
+    <result column="store_state" property="storeState" jdbcType="CHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+ 	
+ 	<select id="findshop" parameterType="HashMap" resultMap="ShopStoreMap">
+ 		SELECT * FROM shop_store 
+			<where>
+			and 1=1
+  			<if test="shop!=null">
+	  			<if test="shop.storeName != null">
+	  					and store_name like #{shop.storeName}
+	  			</if>
+	  			<if test="shop.storeState!=null and shop.storeState!=''">
+	  					and store_state = #{shop.storeState}
+	  			</if>
+	  		</if>
+		  		<if test="page!=null">
+		  			limit #{page.limitIndex},#{page.pageSize}
+		  		</if>
+        </where> 
+ 	</select>
+ 	
+ 	
+</mapper>

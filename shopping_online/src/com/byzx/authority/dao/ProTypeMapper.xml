@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byzx.authority.dao.ProTypeMapper">
+<resultMap id="ProTypeMap" type="ProType" >
+    <id column="type_id" property="typeId" jdbcType="INTEGER" />
+    <result column="type_name" property="typeName" jdbcType="VARCHAR" />
+    <result column="type_desc" property="typeDesc" jdbcType="VARCHAR" />
+    <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+    <result column="specIds" property="specids" jdbcType="VARCHAR" />
+  </resultMap>
+	
+	<!-- 全查商品分类 -->
+	<select id="shopType" resultMap="ProTypeMap">
+		select * from pro_type
+	</select>
+<resultMap id="SpecificationMap" type="Specification" >
+    <id column="spc_id" property="spcId" jdbcType="INTEGER" />
+    <result column="spc_name" property="spcName" jdbcType="VARCHAR" />
+    <result column="state" property="state" jdbcType="CHAR" />
+    <result column="rank" property="rank" jdbcType="INTEGER" />
+    <result column="spec_code" property="specCode" jdbcType="VARCHAR" />
+  </resultMap>	
+	<!-- 查询所有特性  -->
+	<select id="querySpecification" resultMap="SpecificationMap">
+		select * from specification
+	</select>
+	
+	<!-- 判断分类名是否重复 -->
+	<select id="isTypeName" parameterType="String" resultType="String">
+		select type_id from pro_type where type_name=#{typeName}
+	</select>
+	<!-- 添加分类 -->
+	<insert id="addShopType" parameterType="ProType">
+		INSERT INTO `shopping`.`pro_type` (`type_name`,`type_desc`,`parent_id`,`specIds`) VALUES (#{typeName},#{typeDesc},#{parentId},#{specids});
+	</insert>
+	
+	<!-- 查询当前分类的特性 -->
+	<select id="shopTypeSpcId" parameterType="String" resultType="String">
+		select specIds from pro_type where type_id=#{typeId}
+	</select>
+	<!-- 更新分类 -->
+	<update id="updateShopType" parameterType="ProType">
+		UPDATE `shopping`.`pro_type` SET `type_name` = #{typeName} , `type_desc` = #{typeDesc} , `specIds` = #{specids} WHERE `type_id` = #{typeId}; 
+	</update>
+	
+	<!-- 以父id查询id -->
+	<select id="queryParendId" parameterType="String" resultType="String">
+		select type_id from pro_type where parent_id=#{parentId}
+	</select>
+	
+	
+
+	
+
+
+	
+</mapper>

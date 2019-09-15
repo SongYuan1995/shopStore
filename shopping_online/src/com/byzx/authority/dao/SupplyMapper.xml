@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byzx.authority.dao.SupplyMapper">
+
+
+<!--配置数据库表字段与javaBean属性名映射  -->
+<resultMap type="Supply" id="Supplysultmap">
+   <id property="supplyId"  column="supply_id"/>
+   <result property="supplyNum"  column="supply_num"/>
+   <result property="supplyName"  column="supply_name"/>
+   <result property="supplyIntroduce"  column="supply_introduce"/>
+   <result property="concat"  column="concat"/>
+   <result property="phone"  column="phone"/>
+   <result property="address"  column="address"/>
+   <result property="supplyState" column="supply_state"/>
+</resultMap>
+<!-- 店铺信息展示 -->
+<select id="findAllSupply" parameterType="Map" resultMap="Supplysultmap">
+  select 
+       supply_id,
+       supply_num,
+       supply_name,
+       supply_introduce,
+       concat,
+       phone,
+       supply_state,
+       address
+       
+  from  supply
+  where supply_state=0
+
+   <if test="supply.supplyName!=null and supply.supplyName!=''">
+	 	 AND supply_name like concat('%',#{supply.supplyName},'%')
+  </if>
+
+   LIMIT #{page.limitIndex},#{page.page} 
+</select>
+
+<!-- 店铺信息分页总条数 -->
+<select id="getSupplyCount" parameterType="Map" resultType="Integer">
+  select count(*) from  supply  where  supply_state=0
+  <if test="supply.supplyName!=null and supply.supplyName!=''">
+	 	 AND supply_name like concat('%',#{supply.supplyName},'%')
+  </if> 
+</select>
+
+<!-- 供货商信息根据名称判断名称唯一性  -->
+<select id="findSupplyBySupplyName" parameterType="Supply" resultType="String">
+   select supply_name from supply where supply_name=#{supplyName}
+</select>
+<!-- 供货商信息根据编号判断编号 唯一性  -->
+<select id="findAllSupplyBysupplyNum" parameterType="Supply" resultType="String">
+      select supply_num from supply where supply_num=#{supplyNum}
+</select>
+<!-- 供货商信息添加 -->
+<insert id="insertsupply" parameterType="Supply">
+   insert  into
+       supply(
+       supply_id,
+       supply_num,
+       supply_name,
+       supply_introduce,
+       concat,
+       phone,
+       address
+       )
+   values(
+       #{supplyId},
+       #{supplyNum},
+       #{supplyName},
+       #{supplyIntroduce},
+       #{concat},
+       #{phone},
+       #{address})
+</insert>
+
+<!-- 供货商信息修改-->
+<update id="updataAllSupply" parameterType="Supply">
+    update supply
+    set
+       supply_num=#{supplyNum},
+       supply_name=#{supplyName},
+       supply_introduce=#{supplyIntroduce},
+       concat=#{concat},
+       phone=#{phone},
+       address=#{address}
+    where supply_id=#{supplyId}
+</update>
+
+<!-- 供货商信息删除 -->
+<update id="deleteSupply" parameterType="Integer" >
+  update supply
+  set  
+      supply_state=1
+  where supply_id=#{supplyId}
+</update>
+
+	<!-- 下拉框sql -->
+	<select id="findProSupplyList" resultMap="Supplysultmap">
+		select * from supply where 1=1
+	</select>
+	
+</mapper>
